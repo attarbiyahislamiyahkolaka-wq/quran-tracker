@@ -1,0 +1,956 @@
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TahfidzApp - Sistem Setoran Hafalan Al-Qur'an</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <!-- ========================================== -->
+    <!-- LOGIN SCREEN (Default State) -->
+    <!-- ========================================== -->
+    <div id="login-screen" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl border border-slate-100 transform transition-all">
+            <div class="text-center mb-6">
+                <div class="inline-flex bg-emerald-100 p-3.5 rounded-2xl text-emerald-700 mb-3 shadow-inner">
+                    <i class="fa-solid fa-book-quran text-3xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-slate-800">TahfidzApp Login</h1>
+                <p class="text-xs text-slate-500 mt-1">Sistem Pencatatan & Monitoring Setoran Al-Qur'an</p>
+            </div>
+
+            <!-- Login Role Tabs -->
+            <div class="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-2xl mb-6 text-xs font-semibold">
+                <button type="button" onclick="setLoginRole('admin')" id="tab-login-admin" class="py-2.5 rounded-xl transition-all bg-white text-emerald-800 shadow-sm">Admin</button>
+                <button type="button" onclick="setLoginRole('guru')" id="tab-login-guru" class="py-2.5 rounded-xl transition-all text-slate-600 hover:text-slate-900">Guru / Ustad</button>
+                <button type="button" onclick="setLoginRole('ortu')" id="tab-login-ortu" class="py-2.5 rounded-xl transition-all text-slate-600 hover:text-slate-900">Orang Tua</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+                <!-- Username / Password Inputs (For Admin & Guru) -->
+                <div id="credentials-group">
+                    <div class="mb-3">
+                        <label class="block text-xs font-medium text-slate-600 mb-1.5">Username</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                                <i class="fa-solid fa-user text-xs"></i>
+                            </span>
+                            <input type="text" id="login-username" placeholder="Masukkan username..." class="w-full pl-10 pr-4 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1.5">Password</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                                <i class="fa-solid fa-lock text-xs"></i>
+                            </span>
+                            <input type="password" id="login-password" placeholder="Masukkan password..." class="w-full pl-10 pr-4 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Child Name Input (For Orang Tua Role - No Password Required) -->
+                <div id="parent-student-group" class="hidden">
+                    <label class="block text-xs font-medium text-slate-600 mb-1.5">Ketik Nama Anak / Santri</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                            <i class="fa-solid fa-child text-xs"></i>
+                        </span>
+                        <input type="text" id="login-child-name-input" placeholder="Cth: Ahmad" class="w-full pl-10 pr-4 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-2 italic">*Orang tua cukup mengetik nama lengkap anak untuk langsung melihat laporan hafalan tanpa sandi.</p>
+                </div>
+
+                <!-- Error Message Banner -->
+                <div id="login-error" class="hidden bg-rose-50 border border-rose-200 text-rose-700 text-xs p-3 rounded-xl flex items-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span id="login-error-text">Terjadi kesalahan akses.</span>
+                </div>
+
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-xl text-xs transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 mt-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> Masuk / Lihat Laporan
+                </button>
+            </form>
+
+            <!-- Demo Credentials Helper -->
+            <div class="mt-6 pt-5 border-t border-slate-100 text-[11px] text-slate-400 space-y-1">
+                <p class="font-semibold text-slate-600">Panduan Akses:</p>
+                <p>• Admin: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-mono">admin</code> / <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-mono">admin123</code></p>
+                <p>• Ustad/Guru: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-mono">ustad</code> / <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-mono">ustad123</code></p>
+                <p>• Orang Tua: Pilih tab "Orang Tua" lalu ketik nama anak (Cth: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-mono">Ahmad</code>)</p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- MAIN APPLICATION CONTAINER (Hidden until login) -->
+    <!-- ========================================== -->
+    <div id="app-container" class="hidden flex-grow flex flex-col">
+        <!-- Top Navigation Bar -->
+        <header class="bg-emerald-800 text-white shadow-md sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="bg-emerald-700 p-2.5 rounded-xl border border-emerald-600 shadow-inner">
+                        <i class="fa-solid fa-book-quran text-xl text-emerald-200"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-sm md:text-base tracking-wide">TahfidzApp</h1>
+                        <p class="text-[11px] text-emerald-200 hidden sm:block">Sistem Pencatatan Setoran Al-Qur'an</p>
+                    </div>
+                </div>
+
+                <!-- User Info & Logout -->
+                <div class="flex items-center gap-3">
+                    <div class="text-right hidden sm:block">
+                        <p id="user-display-name" class="text-xs font-semibold text-white">Nama Pengguna</p>
+                        <span id="user-role-badge" class="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-900 text-emerald-200 border border-emerald-700">Role</span>
+                    </div>
+                    <button onclick="handleLogout()" class="bg-emerald-900/80 hover:bg-rose-600 text-emerald-100 hover:text-white px-3.5 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 border border-emerald-700/60 shadow-sm" title="Keluar Akun">
+                        <i class="fa-solid fa-power-off"></i> <span class="hidden md:inline">Keluar</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6">
+            
+            <!-- Toast Notification Banner -->
+            <div id="toast" class="hidden mb-6 p-4 rounded-xl border flex items-center justify-between text-xs sm:text-sm shadow-sm transition-all">
+                <span id="toast-message"></span>
+                <button onclick="hideToast()" class="text-slate-500 hover:text-slate-800 font-bold">&times;</button>
+            </div>
+
+            <!-- ================= ROLE: ADMIN VIEW ================= -->
+            <div id="view-admin" class="space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <div>
+                        <span class="bg-indigo-50 text-indigo-700 text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">Panel Administrator</span>
+                        <h2 class="text-xl font-bold text-slate-800 mt-1">Dashboard & Manajemen Data</h2>
+                        <p class="text-sm text-slate-500">Kelola data siswa, guru, serta pantau keseluruhan aktivitas setoran.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="openModal('modal-add-student')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-4 py-2.5 rounded-xl transition-all shadow-sm flex items-center gap-2">
+                            <i class="fa-solid fa-user-plus"></i> Tambah Siswa
+                        </button>
+                        <button onclick="openModal('modal-add-teacher')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium px-4 py-2.5 rounded-xl transition-all shadow-sm flex items-center gap-2">
+                            <i class="fa-solid fa-user-tie"></i> Tambah Guru
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 font-medium">Total Siswa</p>
+                            <h3 id="stat-total-students" class="text-2xl font-bold text-slate-800">0</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-chalkboard-user"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 font-medium">Total Guru / Ustadz</p>
+                            <h3 id="stat-total-teachers" class="text-2xl font-bold text-slate-800">0</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-book-bookmark"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 font-medium">Total Setoran Tercatat</p>
+                            <h3 id="stat-total-setoran" class="text-2xl font-bold text-slate-800">0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Management Tables -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Students Table -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <h3 class="font-semibold text-slate-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-users text-indigo-600"></i> Daftar Siswa Tahfidz
+                            </h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-xs font-semibold text-slate-400 bg-slate-50">
+                                        <th class="px-6 py-3">Nama Siswa</th>
+                                        <th class="px-6 py-3">Orang Tua / Wali</th>
+                                        <th class="px-6 py-3">Kelas</th>
+                                        <th class="px-6 py-3 text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-student-list" class="divide-y divide-slate-100 text-xs">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Teachers Table -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <h3 class="font-semibold text-slate-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-user-tie text-emerald-600"></i> Daftar Guru Pembimbing
+                            </h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-xs font-semibold text-slate-400 bg-slate-50">
+                                        <th class="px-6 py-3">Nama Guru</th>
+                                        <th class="px-6 py-3">NIP / ID</th>
+                                        <th class="px-6 py-3 text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-teacher-list" class="divide-y divide-slate-100 text-xs">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- All Setoran Logs for Admin -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <h3 class="font-semibold text-slate-800 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-clipboard-list text-amber-600"></i> Semua Riwayat Setoran Hafalan
+                        </h3>
+                        <div class="w-full sm:w-64">
+                            <input type="text" id="admin-search" oninput="renderAdminView()" placeholder="Cari nama siswa / surah..." class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-100 text-xs font-semibold text-slate-400 bg-slate-50">
+                                    <th class="px-6 py-3">Tanggal</th>
+                                    <th class="px-6 py-3">Siswa</th>
+                                    <th class="px-6 py-3">Surah & Ayat</th>
+                                    <th class="px-6 py-3">Status</th>
+                                    <th class="px-6 py-3">Guru Penguji</th>
+                                    <th class="px-6 py-3">Catatan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-setoran-list" class="divide-y divide-slate-100 text-xs">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= ROLE: GURU VIEW ================= -->
+            <div id="view-guru" class="space-y-6 hidden">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <span class="bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">Panel Guru / Ustadz</span>
+                    <h2 class="text-xl font-bold text-slate-800 mt-1">Input Setoran Hafalan Baru</h2>
+                    <p class="text-sm text-slate-500">Catat perkembangan hafalan Al-Qur'an siswa dengan lengkap dan akurat.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Form Input Setoran -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
+                        <h3 class="font-semibold text-slate-800 text-sm mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-pen-to-square text-emerald-600"></i> Form Setoran
+                        </h3>
+                        <form id="form-setoran" onsubmit="handleSetoranSubmit(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Pilih Siswa</label>
+                                <select id="input-student" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                                    <!-- Populated by JS -->
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Nama Surah</label>
+                                <select id="input-surah" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                                    <option value="">-- Pilih Surah --</option>
+                                    <option value="Al-Fatihah">Al-Fatihah</option>
+                                    <option value="An-Naba'">An-Naba'</option>
+                                    <option value="An-Nazi'at">An-Nazi'at</option>
+                                    <option value="'Abasa">Abasa</option>
+                                    <option value="At-Takwir">At-Takwir</option>
+                                    <option value="Al-Infitar">Al-Infitar</option>
+                                    <option value="Al-Mutaffifin">Al-Mutaffifin</option>
+                                    <option value="Al-Inshiqaq">Al-Inshiqaq</option>
+                                    <option value="Al-Buruj">Al-Buruj</option>
+                                    <option value="At-Tariq">At-Tariq</option>
+                                    <option value="Al-A'la">Al-A'la</option>
+                                    <option value="Al-Ghashiyah">Al-Ghashiyah</option>
+                                    <option value="Al-Fajr">Al-Fajr</option>
+                                    <option value="Al-Balad">Al-Balad</option>
+                                    <option value="Ash-Shams">Ash-Shams</option>
+                                    <option value="Al-Lail">Al-Lail</option>
+                                    <option value="Ad-Duha">Ad-Duha</option>
+                                    <option value="Ash-Sharh">Ash-Sharh</option>
+                                    <option value="At-Tin">At-Tin</option>
+                                    <option value="Al-Alaq">Al-Alaq</option>
+                                    <option value="Al-Qadr">Al-Qadr</option>
+                                    <option value="Al-Bayyinah">Al-Bayyinah</option>
+                                    <option value="Az-Zalzalah">Az-Zalzalah</option>
+                                    <option value="Al-'Adiyat">Al-'Adiyat</option>
+                                    <option value="Al-Qari'ah">Al-Qari'ah</option>
+                                    <option value="At-Takathur">At-Takathur</option>
+                                    <option value="Al-'Asr">Al-'Asr</option>
+                                    <option value="Al-Humazah">Al-Humazah</option>
+                                    <option value="Al-Fil">Al-Fil</option>
+                                    <option value="Quraisy">Quraisy</option>
+                                    <option value="Al-Ma'un">Al-Ma'un</option>
+                                    <option value="Al-Kauthar">Al-Kauthar</option>
+                                    <option value="Al-Kafirun">Al-Kafirun</option>
+                                    <option value="An-Nasr">An-Nasr</option>
+                                    <option value="Al-Masad">Al-Masad</option>
+                                    <option value="Al-Ikhlas">Al-Ikhlas</option>
+                                    <option value="Al-Falaq">Al-Falaq</option>
+                                    <option value="An-Nas">An-Nas</option>
+                                    <option value="Al-Baqarah">Al-Baqarah (Lainnya)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Ayat (Contoh: 1-15)</label>
+                                <input type="text" id="input-ayat" placeholder="Cth: 1-10" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Status Penilaian</label>
+                                <select id="input-status" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                                    <option value="Mumtaz">Mumtaz (Sangat Baik / Sempurna)</option>
+                                    <option value="Jayyid">Jayyid (Baik / Lancar)</option>
+                                    <option value="Maqbul">Maqbul (Cukup / Perlu Koreksi)</option>
+                                    <option value="Muraja'ah">Muraja'ah (Perlu Mengulang)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Tanggal Setoran</label>
+                                <input type="date" id="input-date" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Catatan / Tajwid</label>
+                                <textarea id="input-notes" rows="2" placeholder="Catatan tajwid atau kelancaran..." class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Nama Guru Penguji</label>
+                                <input type="text" id="input-teacher" value="Ustadz H. Abdullah, S.Pd.I" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+                            </div>
+                            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-floppy-disk"></i> Simpan Setoran
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Recent History by Guru -->
+                    <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden h-fit">
+                        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <h3 class="font-semibold text-slate-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-clock-rotate-left text-emerald-600"></i> Riwayat Setoran Terbaru
+                            </h3>
+                            <div class="w-full sm:w-64">
+                                <input type="text" id="guru-search" oninput="renderGuruView()" placeholder="Cari nama siswa..." class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-xs font-semibold text-slate-400 bg-slate-50">
+                                        <th class="px-6 py-3">Tanggal</th>
+                                        <th class="px-6 py-3">Siswa</th>
+                                        <th class="px-6 py-3">Surah & Ayat</th>
+                                        <th class="px-6 py-3">Status</th>
+                                        <th class="px-6 py-3">Catatan</th>
+                                        <th class="px-6 py-3 text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="guru-setoran-list" class="divide-y divide-slate-100 text-xs">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= ROLE: ORANG TUA VIEW ================= -->
+            <div id="view-ortu" class="space-y-6 hidden">
+                <div class="bg-gradient-to-r from-emerald-700 to-teal-800 text-white p-6 rounded-2xl shadow-md relative overflow-hidden">
+                    <div class="relative z-10">
+                        <span class="bg-white/20 text-white text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider backdrop-blur-sm">Portal Wali Santri</span>
+                        <h2 id="ortu-welcome-title" class="text-2xl font-bold mt-2">Selamat Datang, Wali Santri</h2>
+                        <p class="text-emerald-100 text-sm mt-1">Berikut adalah laporan perkembangan hafalan Al-Qur'an ananda secara real-time.</p>
+                    </div>
+                    <div class="absolute right-0 bottom-0 opacity-15 translate-x-4 translate-y-4">
+                        <i class="fa-solid fa-quran text-9xl"></i>
+                    </div>
+                </div>
+
+                <!-- Student Profile Summary Card -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-child"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 font-medium">Nama Santri (Anak)</p>
+                            <h3 id="ortu-child-name" class="text-lg font-bold text-slate-800">-</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-award"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 font-medium">Total Setoran Selesai</p>
+                            <h3 id="ortu-total-setoran" class="text-xl font-bold text-slate-800">0</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-star"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 font-medium">Status Keaktifan</p>
+                            <h3 class="text-sm font-bold text-emerald-600 flex items-center gap-1.5 mt-1">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Aktif & Terpantau
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parent Log Table -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                        <h3 class="font-semibold text-slate-800 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-book-open-reader text-teal-600"></i> Riwayat & Progres Hafalan Anak Anda
+                        </h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-100 text-xs font-semibold text-slate-400 bg-slate-50">
+                                    <th class="px-6 py-3">Tanggal</th>
+                                    <th class="px-6 py-3">Surah & Ayat</th>
+                                    <th class="px-6 py-3">Status</th>
+                                    <th class="px-6 py-3">Guru Penguji</th>
+                                    <th class="px-6 py-3">Catatan Ustadz</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ortu-setoran-list" class="divide-y divide-slate-100 text-xs">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t border-slate-100 py-4 mt-auto">
+            <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400">
+                &copy; 2026 TahfidzApp — Sistem Pencatatan Hafalan Al-Qur'an. Hak Cipta Dilindungi.
+            </div>
+        </footer>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- MODALS -->
+    <!-- ========================================== -->
+
+    <!-- Modal: Tambah Siswa -->
+    <div id="modal-add-student" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus text-indigo-600"></i> Tambah Siswa Baru
+                </h3>
+                <button onclick="closeModal('modal-add-student')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+            </div>
+            <form onsubmit="handleAddStudent(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Nama Lengkap Siswa</label>
+                    <input type="text" id="new-student-name" required placeholder="Cth: Muhammad Zaki" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Nama Orang Tua / Wali</label>
+                    <input type="text" id="new-student-parent" required placeholder="Cth: Bpk. H. Ahmad" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Kelas / Kelompok</label>
+                    <input type="text" id="new-student-class" required placeholder="Cth: 6 Tahfidz A" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-add-student')" class="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl">Batal</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Tambah Guru -->
+    <div id="modal-add-teacher" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-user-tie text-emerald-600"></i> Tambah Guru Pembimbing
+                </h3>
+                <button onclick="closeModal('modal-add-teacher')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+            </div>
+            <form onsubmit="handleAddTeacher(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Nama Lengkap & Gelar</label>
+                    <input type="text" id="new-teacher-name" required placeholder="Cth: Ustadz Fulan, Lc." class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">NIP / ID Guru</label>
+                    <input type="text" id="new-teacher-nip" required placeholder="Cth: GUR-2026-04" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-add-teacher')" class="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl">Batal</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT LOGIC & STATE MANAGEMENT -->
+    <!-- ========================================== -->
+    <script>
+        // Initial Data Seeds
+        const defaultStudents = [
+            { id: 1, name: "Ahmad", parentName: "Bapak H. Ahmad", className: "6 Tahfidz A" },
+            { id: 2, name: "Fatimah Az-Zahra", parentName: "Bpk. Ridwan", className: "6 Tahfidz A" },
+            { id: 3, name: "Umar Faruq", parentName: "Ibu Siti Aminah", className: "5 Tahfidz B" },
+            { id: 4, name: "Aisyah Humaira", parentName: "Bpk. Zulkifli", className: "5 Tahfidz B" }
+        ];
+
+        const defaultTeachers = [
+            { id: 1, name: "Ustadz H. Abdullah, S.Pd.I", nip: "GUR-2026-01" },
+            { id: 2, name: "Ustadzah Maryam, S.Hum", nip: "GUR-2026-02" }
+        ];
+
+        const defaultSetoran = [
+            { id: 101, studentId: 1, studentName: "Ahmad", surah: "An-Naba'", ayat: "1-15", status: "Mumtaz", date: "2026-06-01", notes: "Makhroj huruf qaf dan ha sudah sangat baik.", teacherName: "Ustadz H. Abdullah, S.Pd.I" },
+            { id: 102, studentId: 1, studentName: "Ahmad", surah: "An-Naba'", ayat: "16-30", status: "Jayyid", date: "2026-06-03", notes: "Perhatikan panjang mad wajib muttasil.", teacherName: "Ustadz H. Abdullah, S.Pd.I" },
+            { id: 103, studentId: 2, studentName: "Fatimah Az-Zahra", surah: "An-Nazi'at", ayat: "1-20", status: "Mumtaz", date: "2026-06-03", notes: "Sangat lancar dan tartil.", teacherName: "Ustadzah Maryam, S.Hum" },
+            { id: 104, studentId: 3, studentName: "Umar Faruq", surah: "'Abasa", ayat: "1-15", status: "Muraja'ah", date: "2026-06-04", notes: "Ada beberapa ayat tertukar di tengah.", teacherName: "Ustadz H. Abdullah, S.Pd.I" }
+        ];
+
+        // State Manager with LocalStorage
+        let students = JSON.parse(localStorage.getItem('tahfidz_students')) || defaultStudents;
+        let teachers = JSON.parse(localStorage.getItem('tahfidz_teachers')) || defaultTeachers;
+        let setoran = JSON.parse(localStorage.getItem('tahfidz_setoran')) || defaultSetoran;
+        
+        // Current Logged-In User State
+        let currentUser = JSON.parse(localStorage.getItem('tahfidz_current_user')) || null;
+        let loginRoleTab = 'admin'; // 'admin', 'guru', 'ortu'
+
+        function saveData() {
+            localStorage.setItem('tahfidz_students', JSON.stringify(students));
+            localStorage.setItem('tahfidz_teachers', JSON.stringify(teachers));
+            localStorage.setItem('tahfidz_setoran', JSON.stringify(setoran));
+            localStorage.setItem('tahfidz_current_user', JSON.stringify(currentUser));
+        }
+
+        // Login Role Selector Tabs
+        function setLoginRole(role) {
+            loginRoleTab = role;
+            const btnAdmin = document.getElementById('tab-login-admin');
+            const btnGuru = document.getElementById('tab-login-guru');
+            const btnOrtu = document.getElementById('tab-login-ortu');
+            const credGroup = document.getElementById('credentials-group');
+            const parentGroup = document.getElementById('parent-student-group');
+            const errorDiv = document.getElementById('login-error');
+
+            errorDiv.classList.add('hidden');
+
+            // Reset tab styles
+            [btnAdmin, btnGuru, btnOrtu].forEach(b => b.className = "py-2.5 rounded-xl transition-all text-slate-600 hover:text-slate-900");
+
+            if (role === 'admin') {
+                btnAdmin.className = "py-2.5 rounded-xl transition-all bg-white text-emerald-800 shadow-sm font-semibold";
+                credGroup.classList.remove('hidden');
+                parentGroup.classList.add('hidden');
+                document.getElementById('login-username').value = "admin";
+                document.getElementById('login-password').value = "admin123";
+            } else if (role === 'guru') {
+                btnGuru.className = "py-2.5 rounded-xl transition-all bg-white text-emerald-800 shadow-sm font-semibold";
+                credGroup.classList.remove('hidden');
+                parentGroup.classList.add('hidden');
+                document.getElementById('login-username').value = "ustad";
+                document.getElementById('login-password').value = "ustad123";
+            } else if (role === 'ortu') {
+                btnOrtu.className = "py-2.5 rounded-xl transition-all bg-white text-emerald-800 shadow-sm font-semibold";
+                credGroup.classList.add('hidden');
+                parentGroup.classList.remove('hidden');
+                document.getElementById('login-child-name-input').value = "Ahmad";
+            }
+        }
+
+        // Handle Login Submission
+        function handleLogin(e) {
+            e.preventDefault();
+            const errorDiv = document.getElementById('login-error');
+            const errorText = document.getElementById('login-error-text');
+
+            if (loginRoleTab === 'admin') {
+                const u = document.getElementById('login-username').value.trim();
+                const p = document.getElementById('login-password').value.trim();
+                if (u === 'admin' && p === 'admin123') {
+                    currentUser = { role: 'admin', name: 'Administrator Utama' };
+                } else {
+                    errorText.innerText = "Username atau password admin salah (Gunakan admin / admin123).";
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+            } else if (loginRoleTab === 'guru') {
+                const u = document.getElementById('login-username').value.trim();
+                const p = document.getElementById('login-password').value.trim();
+                if (u === 'ustad' && p === 'ustad123') {
+                    currentUser = { role: 'guru', name: 'Ustadz H. Abdullah, S.Pd.I' };
+                } else {
+                    errorText.innerText = "Username atau password guru salah (Gunakan ustad / ustad123).";
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+            } else if (loginRoleTab === 'ortu') {
+                const childInputName = document.getElementById('login-child-name-input').value.trim();
+                if (!childInputName) {
+                    errorText.innerText = "Silakan masukkan nama anak/santri terlebih dahulu.";
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+                
+                // Case-insensitive search in students list
+                const matchedStudent = students.find(s => s.name.toLowerCase() === childInputName.toLowerCase());
+                if (matchedStudent) {
+                    currentUser = {
+                        role: 'ortu',
+                        name: `Wali dari ${matchedStudent.name}`,
+                        studentId: matchedStudent.id,
+                        studentName: matchedStudent.name
+                    };
+                } else {
+                    errorText.innerText = `Nama anak "${childInputName}" tidak ditemukan. Periksa kembali pengetikan nama atau tambahkan siswa via admin.`;
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+            }
+
+            saveData();
+            checkAuthState();
+            showToast(`Berhasil masuk sebagai ${currentUser.name}`, 'success');
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            saveData();
+            checkAuthState();
+            showToast('Anda telah keluar dari sistem.', 'info');
+        }
+
+        function checkAuthState() {
+            const loginScreen = document.getElementById('login-screen');
+            const appContainer = document.getElementById('app-container');
+
+            if (!currentUser) {
+                loginScreen.classList.remove('hidden');
+                appContainer.classList.add('hidden');
+                setLoginRole('admin'); // reset login tab
+            } else {
+                loginScreen.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                
+                // Update header info
+                document.getElementById('user-display-name').innerText = currentUser.name;
+                const roleBadge = document.getElementById('user-role-badge');
+                
+                if (currentUser.role === 'admin') roleBadge.innerText = 'Administrator';
+                else if (currentUser.role === 'guru') roleBadge.innerText = 'Guru / Ustad';
+                else if (currentUser.role === 'ortu') roleBadge.innerText = 'Orang Tua / Wali';
+
+                // Render respective view
+                renderAppView();
+            }
+        }
+
+        function renderAppView() {
+            document.getElementById('view-admin').classList.add('hidden');
+            document.getElementById('view-guru').classList.add('hidden');
+            document.getElementById('view-ortu').classList.add('hidden');
+
+            if (currentUser.role === 'admin') {
+                document.getElementById('view-admin').classList.remove('hidden');
+                renderAdminView();
+            } else if (currentUser.role === 'guru') {
+                document.getElementById('view-guru').classList.remove('hidden');
+                renderGuruView();
+            } else if (currentUser.role === 'ortu') {
+                document.getElementById('view-ortu').classList.remove('hidden');
+                renderOrtuView();
+            }
+        }
+
+        // Render Admin View
+        function renderAdminView() {
+            document.getElementById('stat-total-students').innerText = students.length;
+            document.getElementById('stat-total-teachers').innerText = teachers.length;
+            document.getElementById('stat-total-setoran').innerText = setoran.length;
+
+            // Students table
+            const studentTbody = document.getElementById('admin-student-list');
+            studentTbody.innerHTML = students.map(s => `
+                <tr class="hover:bg-slate-50/50">
+                    <td class="px-6 py-3 font-medium text-slate-800">${s.name}</td>
+                    <td class="px-6 py-3 text-slate-600">${s.parentName}</td>
+                    <td class="px-6 py-3 text-slate-500">${s.className}</td>
+                    <td class="px-6 py-3 text-right">
+                        <button onclick="deleteStudent(${s.id})" class="text-rose-500 hover:text-rose-700 font-medium px-2 py-1 rounded">Hapus</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Teachers table
+            const teacherTbody = document.getElementById('admin-teacher-list');
+            teacherTbody.innerHTML = teachers.map(t => `
+                <tr class="hover:bg-slate-50/50">
+                    <td class="px-6 py-3 font-medium text-slate-800">${t.name}</td>
+                    <td class="px-6 py-3 text-slate-600">${t.nip}</td>
+                    <td class="px-6 py-3 text-right">
+                        <button onclick="deleteTeacher(${t.id})" class="text-rose-500 hover:text-rose-700 font-medium px-2 py-1 rounded">Hapus</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Filtered Setoran table
+            const searchVal = document.getElementById('admin-search').value.toLowerCase();
+            const filteredSetoran = setoran.filter(st => 
+                st.studentName.toLowerCase().includes(searchVal) || st.surah.toLowerCase().includes(searchVal)
+            );
+
+            const setoranTbody = document.getElementById('admin-setoran-list');
+            if (filteredSetoran.length === 0) {
+                setoranTbody.innerHTML = `<tr><td colspan="6" class="px-6 py-6 text-center text-slate-400">Tidak ada riwayat setoran yang cocok.</td></tr>`;
+            } else {
+                setoranTbody.innerHTML = filteredSetoran.map(st => `
+                    <tr class="hover:bg-slate-50/50">
+                        <td class="px-6 py-3 text-slate-600">${st.date}</td>
+                        <td class="px-6 py-3 font-medium text-slate-800">${st.studentName}</td>
+                        <td class="px-6 py-3 text-slate-700 font-medium">Q.S. ${st.surah} (Ayat ${st.ayat})</td>
+                        <td class="px-6 py-3">${renderStatusBadge(st.status)}</td>
+                        <td class="px-6 py-3 text-slate-600">${st.teacherName}</td>
+                        <td class="px-6 py-3 text-slate-500 italic">${st.notes || '-'}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // Render Guru View
+        function renderGuruView() {
+            const selectEl = document.getElementById('input-student');
+            selectEl.innerHTML = students.map(s => `<option value="${s.id}">${s.name} (${s.className})</option>`).join('');
+
+            const dateInput = document.getElementById('input-date');
+            if (!dateInput.value) {
+                dateInput.value = new Date().toISOString().split('T')[0];
+            }
+
+            const searchVal = document.getElementById('guru-search').value.toLowerCase();
+            const filteredSetoran = setoran.filter(st => st.studentName.toLowerCase().includes(searchVal));
+
+            const guruSetoranTbody = document.getElementById('guru-setoran-list');
+            if (filteredSetoran.length === 0) {
+                guruSetoranTbody.innerHTML = `<tr><td colspan="6" class="px-6 py-6 text-center text-slate-400">Belum ada data setoran.</td></tr>`;
+            } else {
+                guruSetoranTbody.innerHTML = filteredSetoran.map(st => `
+                    <tr class="hover:bg-slate-50/50">
+                        <td class="px-6 py-3 text-slate-600">${st.date}</td>
+                        <td class="px-6 py-3 font-medium text-slate-800">${st.studentName}</td>
+                        <td class="px-6 py-3 text-slate-700 font-medium">Q.S. ${st.surah} (${st.ayat})</td>
+                        <td class="px-6 py-3">${renderStatusBadge(st.status)}</td>
+                        <td class="px-6 py-3 text-slate-500">${st.notes || '-'}</td>
+                        <td class="px-6 py-3 text-right">
+                            <button onclick="deleteSetoran(${st.id})" class="text-rose-500 hover:text-rose-700 font-medium px-2 py-1 rounded">Hapus</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // Render Ortu View (Restricted to logged-in child's studentId)
+        function renderOrtuView() {
+            const childId = currentUser.studentId;
+            const childObj = students.find(s => s.id === childId);
+            const childName = childObj ? childObj.name : currentUser.studentName;
+
+            document.getElementById('ortu-welcome-title').innerText = `Selamat Datang, Wali dari ${childName}`;
+            document.getElementById('ortu-child-name').innerText = childName;
+
+            const childSetoran = setoran.filter(st => st.studentId === childId);
+            document.getElementById('ortu-total-setoran').innerText = childSetoran.length;
+
+            const ortuTbody = document.getElementById('ortu-setoran-list');
+            if (childSetoran.length === 0) {
+                ortuTbody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-slate-400">Belum ada riwayat setoran hafalan untuk ananda ${childName}.</td></tr>`;
+            } else {
+                ortuTbody.innerHTML = childSetoran.map(st => `
+                    <tr class="hover:bg-slate-50/50">
+                        <td class="px-6 py-3 text-slate-600">${st.date}</td>
+                        <td class="px-6 py-3 font-medium text-slate-800">Q.S. ${st.surah} (Ayat ${st.ayat})</td>
+                        <td class="px-6 py-3">${renderStatusBadge(st.status)}</td>
+                        <td class="px-6 py-3 text-slate-600">${st.teacherName}</td>
+                        <td class="px-6 py-3 text-slate-500 italic">${st.notes || '-'}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // Status Badge Helper
+        function renderStatusBadge(status) {
+            if (status === 'Mumtaz') {
+                return `<span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full font-semibold text-[10px] border border-emerald-200">Mumtaz</span>`;
+            } else if (status === 'Jayyid') {
+                return `<span class="bg-teal-50 text-teal-700 px-2.5 py-1 rounded-full font-semibold text-[10px] border border-teal-200">Jayyid</span>`;
+            } else if (status === 'Maqbul') {
+                return `<span class="bg-sky-50 text-sky-700 px-2.5 py-1 rounded-full font-semibold text-[10px] border border-sky-200">Maqbul</span>`;
+            } else {
+                return `<span class="bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full font-semibold text-[10px] border border-amber-200">Muraja'ah</span>`;
+            }
+        }
+
+        // Form Submission Actions
+        function handleSetoranSubmit(e) {
+            e.preventDefault();
+            const studentId = parseInt(document.getElementById('input-student').value);
+            const studentObj = students.find(s => s.id === studentId);
+            
+            const newLog = {
+                id: Date.now(),
+                studentId: studentId,
+                studentName: studentObj ? studentObj.name : 'Siswa',
+                surah: document.getElementById('input-surah').value,
+                ayat: document.getElementById('input-ayat').value,
+                status: document.getElementById('input-status').value,
+                date: document.getElementById('input-date').value,
+                notes: document.getElementById('input-notes').value,
+                teacherName: document.getElementById('input-teacher').value
+            };
+
+            setoran.unshift(newLog);
+            saveData();
+            showToast('Setoran hafalan berhasil disimpan!', 'success');
+            document.getElementById('form-setoran').reset();
+            document.getElementById('input-date').value = new Date().toISOString().split('T')[0];
+            renderGuruView();
+        }
+
+        function handleAddStudent(e) {
+            e.preventDefault();
+            const name = document.getElementById('new-student-name').value;
+            const parentName = document.getElementById('new-student-parent').value;
+            const className = document.getElementById('new-student-class').value;
+
+            students.push({ id: Date.now(), name, parentName, className });
+            saveData();
+            closeModal('modal-add-student');
+            showToast('Siswa baru berhasil ditambahkan!', 'success');
+            renderAdminView();
+            e.target.reset();
+        }
+
+        function handleAddTeacher(e) {
+            e.preventDefault();
+            const name = document.getElementById('new-teacher-name').value;
+            const nip = document.getElementById('new-teacher-nip').value;
+
+            teachers.push({ id: Date.now(), name, nip });
+            saveData();
+            closeModal('modal-add-teacher');
+            showToast('Guru pembimbing baru berhasil ditambahkan!', 'success');
+            renderAdminView();
+            e.target.reset();
+        }
+
+        function deleteStudent(id) {
+            students = students.filter(s => s.id !== id);
+            saveData();
+            showToast('Data siswa berhasil dihapus.', 'info');
+            renderAdminView();
+        }
+
+        function deleteTeacher(id) {
+            teachers = teachers.filter(t => t.id !== id);
+            saveData();
+            showToast('Data guru berhasil dihapus.', 'info');
+            renderAdminView();
+        }
+
+        function deleteSetoran(id) {
+            setoran = setoran.filter(st => st.id !== id);
+            saveData();
+            showTool('Catatan setoran berhasil dihapus.', 'info');
+            renderGuruView();
+        }
+
+        // Modal Helpers
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+            document.getElementById(modalId).classList.add('flex');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('flex');
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // Toast Helper
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-message');
+            msgEl.innerText = message;
+            
+            toast.className = `mb-6 p-4 rounded-xl border flex items-center justify-between text-xs sm:text-sm shadow-sm transition-all ${
+                type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-100 border-slate-200 text-slate-800'
+            }`;
+            toast.classList.remove('hidden');
+
+            setTimeout(() => {
+                hideToast();
+            }, 4000);
+        }
+
+        function hideToast() {
+            document.getElementById('toast').classList.add('hidden');
+        }
+
+        // Initialize App on Load
+        window.onload = function() {
+            checkAuthState();
+        }
+    </script>
+</body>
+</html>
+```
